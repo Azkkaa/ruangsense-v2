@@ -1,0 +1,7 @@
+{
+	"ctrl_c_on_connect": true,
+	"sync_folder": "src",
+	"open_on_start": false,
+	"sync_file_types": "py,txt,json,html,env",
+	"ignore_files": ".gitignore,.micropico,.vscode,.git,node_modules,backend,frontend"
+}
