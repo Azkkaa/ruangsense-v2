@@ -22,7 +22,7 @@ payload = {
 
 """
   data_status based in indonesia weather condition:
-  - temp_status: <18 "cold", 18-25 "normal", 25-32 "hot", >32 "very hot"
+  - temp_status: <18 "cold", 18-25 "normal", 25-40 "hot", >40 "very hot"
   - humid_status: <40 "very dry", 40-65 "moderately dry", 65-85 "normal", >85 "humid"
   - gas_status: /based on air quality/ <50 "normal", 50-150 "warning", 151-400 "danger", >400 "critical"
 """
@@ -59,14 +59,14 @@ async def read_sensor ():
 
       payload['temp'] = round(sensor.dhtSensor.temperature(), 2)
       payload['humid'] = round(sensor.dhtSensor.humidity(), 2)
-      payload['gas'] = count_ppm(raw_adc=raw_val)
+      payload['gas'] = round(count_ppm(raw_adc=raw_val))
 
       # Determine Temperature status
-      if payload['temp'] < 18:
+      if payload['temp'] < 22:
         payload["temp_status"] = "cold"
-      elif 18 <= payload['temp'] < 25:
+      elif 22 <= payload['temp'] < 32:
         payload["temp_status"] = "normal"
-      elif 25 <= payload['temp'] < 32:
+      elif 32 <= payload['temp'] < 40:
         payload["temp_status"] = "hot"
       else:
         payload["temp_status"] = "very hot"

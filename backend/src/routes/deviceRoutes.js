@@ -1,9 +1,9 @@
 import express from 'express'
-import { createDevice } from '../controllers/DeviceController.js'
+import { createDevice, getDeviceUser } from '../controllers/DeviceController.js'
 
 const router = express.Router()
 
-router.route('/')
-  .post(createDevice)
+router.post('/create', createDevice)
+router.get('/:deviceId', getDeviceUser)
 
 export default router;

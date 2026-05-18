@@ -10,6 +10,11 @@ const deviceSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  status: {
+    type: Boolean,
+    required: false,
+    default: false
+  },
   last_seen: {
     type: Date,
     default: Date.now

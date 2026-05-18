@@ -23,3 +23,21 @@ export const createDevice = async (req, res) => {
     })
   }
 }
+
+export const getDeviceUser = async (req, res) => {
+  try {
+    const deviceId = req.params.deviceId
+
+    const device = await Device.findOne({ device_id: deviceId })
+
+    res.status(200).json({
+      success: true,
+      device: device
+    })
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    })
+  }
+}
