@@ -1,5 +1,5 @@
 
-# RuangSense-v2 🚀
+# RuangSense-v2 ❄️
 > **Platform & Dashboard IoT Modern untuk Monitoring Lingkungan Ruangan secara Real-time.**
 
 RuangSense-v2 adalah aplikasi dashboard IoT premium berbasis web yang dirancang untuk memantau kondisi lingkungan ruangan (suhu, kelembaban, dan kualitas udara/gas) secara instan tanpa delay. Menggunakan arsitektur berbasis *Room* pada Socket.io, platform ini menjamin distribusi data dari berbagai perangkat mikrokontroler (seperti ESP32) tersalurkan secara aman, presisi, dan terisolasi ke antarmuka pengguna yang elegan.
