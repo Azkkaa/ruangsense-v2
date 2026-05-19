@@ -1,31 +1,23 @@
 from machine import Pin, ADC, I2C
 from machine_i2c_lcd import I2cLcd
 from boot import connect_wifi
+from boot import setup_mqtt
 import asyncio
 import dht
 import math
 import config
-import urequests
 import ujson
 
 device_id = config.DEVICE_ID
+
+client = None
 
 payload = {
     "device_id": device_id,
     "temp": 0,
     "humid": 0,
-    "gas": 0,
-    "temp_status": "normal",
-    "humid_status": "normal",
-    "gas_status": "normal"
+    "gas": 0
 }
-
-"""
-  data_status based in indonesia weather condition:
-  - temp_status: <18 "cold", 18-25 "normal", 25-40 "hot", >40 "very hot"
-  - humid_status: <40 "very dry", 40-65 "moderately dry", 65-85 "normal", >85 "humid"
-  - gas_status: /based on air quality/ <50 "normal", 50-150 "warning", 151-400 "danger", >400 "critical"
-"""
 
 def setup_sensor():
   dht_pin = 15
@@ -61,36 +53,6 @@ async def read_sensor ():
       payload['humid'] = round(sensor.dhtSensor.humidity(), 2)
       payload['gas'] = round(count_ppm(raw_adc=raw_val))
 
-      # Determine Temperature status
-      if payload['temp'] < 22:
-        payload["temp_status"] = "cold"
-      elif 22 <= payload['temp'] < 32:
-        payload["temp_status"] = "normal"
-      elif 32 <= payload['temp'] < 40:
-        payload["temp_status"] = "hot"
-      else:
-        payload["temp_status"] = "very hot"
-
-      # Determine Humidity status
-      if payload['humid'] < 40:
-        payload["humid_status"] = "very dry"
-      elif 40 <= payload['humid'] < 65:
-        payload["humid_status"] = "moderately dry"
-      elif 65 <= payload['humid'] < 85:
-        payload["humid_status"] = "normal"
-      else:
-        payload["humid_status"] = "humid"
-
-      # Determine Gas status
-      if payload["gas"] < 50:
-        payload["gas_status"] = "normal"
-      elif 50 <= payload["gas"] < 150:
-        payload["gas_status"] = "warning"
-      elif 150 <= payload["gas"] < 400:
-        payload["gas_status"] = "danger"
-      else:
-        payload["gas_status"] = "critical"
-
       print(f"[DHT] Temperature: {payload['temp']}°C, Humidity: {payload['humid']}%")
       print(f"[MQ-2] Consentration: {payload['gas']} ppm")
     except Exception as e:
@@ -116,7 +78,7 @@ async def update_lcd(lcd):
   lcd.move_to(0, 0)
   lcd.putstr("Initializing")
   lcd.move_to(0, 1)
-  lcd.putstr("RuangSense v2")
+  lcd.putstr("RuangSense-v2")
   await asyncio.sleep(2)
   lcd.clear()
 
@@ -124,24 +86,32 @@ async def update_lcd(lcd):
     lcd.move_to(0, 0)
     lcd.putstr(f"T:{payload['temp']}\xdfC H:{int(payload['humid'])}%")
     lcd.move_to(0, 1)
-    lcd.putstr(f"G:{payload['gas']:.2f} ppm")
+    lcd.putstr(f"G:{payload['gas']} ppm")
     await asyncio.sleep(1)
 
-async def send_request():
-  while True:
-    try:
-      print("Sending request:", payload)
+def mqtt_callback(topic, msg):
+  print(f"[MQTT] Topic:{topic.decode()} | Message: {msg.decode()}")
 
-      headers = {
-        'Content-Type': 'application/json'
-      }
-      data = ujson.dumps(payload)
-    
-      res = urequests.post(config.URL_ENDPOINT, data=data, headers=headers)
-      print("Status:", res.status_code)
-      res.close()
-    except Exception as e:
-      print("Failed to send request:", e)
+async def mqtt_listener():
+  while True:
+    if client is not None:
+      try:
+        client.check_msg()
+      except Exception as e:
+        print("Error:", e)
+    await asyncio.sleep(0.5)
+
+async def send_telementry():
+  while True:
+    if client is not None:
+      try:
+        print("Sending payload:", payload)
+
+        json_payload = ujson.dumps(payload).encode()
+        print("[MQTT OUT] Mengirim data telemetri...")
+        client.publish(config.TOPIC_DATA, json_payload)
+      except Exception as e:
+        print("Gagal mengirim data:", e)
     await asyncio.sleep(5)
 
 def count_ppm(raw_adc):
@@ -177,17 +147,18 @@ async def buzzer_control():
   buzzer = Pin(14, Pin.OUT)
 
   while True:
-    if payload["gas_status"] == "danger":
-      buzzer.value(1)  # Turn on buzzer
+    if payload["gas"] >= 150 and payload["gas"] <= 400:
+      buzzer.value(1)  # Turn on buzzer - danger zone
       await asyncio.sleep(0.5)
-    elif payload["gas_status"] == "warning":
-      buzzer.value(0)  # Turn off buzzer
+    elif payload["gas"] >= 70 and payload["gas"] < 150:
+      buzzer.value(1)  # Turn on buzzer - warning zone
       await asyncio.sleep(1)
     else:
       buzzer.value(0)  # Turn off buzzer
       await asyncio.sleep(1)
 
 async def main():
+  global client
   print("--- RuangSense v2: Monitoring System ---")
 
   is_connected = connect_wifi(config.WIFI_SSID, config.WIFI_PASSWORD)
@@ -200,14 +171,37 @@ async def main():
   elif not is_connected:
     return
 
-  await asyncio.gather(
-    read_sensor(),
-    buzzer_control(),
-    update_lcd(lcd),
-    send_request()
-  )
+  try:
+    client = setup_mqtt()
+    client.set_callback(mqtt_callback)
+    client.connect()
+    print("[MQTT] Connected to Broker!")
+    client.publish(config.TOPIC_STATUS, b"online", retain=True)
+
+    client.subscribe(config.TOPIC_COMMAND)
+    print(f"[MQTT] Subscribe to {config.TOPIC_COMMAND.decode()}")
+
+    await asyncio.gather(
+      read_sensor(),
+      buzzer_control(),
+      update_lcd(lcd),
+      mqtt_listener(),
+      send_telementry()
+    )
+  except asyncio.CancelledError:
+    print("Tasks cancelled.")
+  except Exception as e:
+    print("Error:", e)
+  finally:
+    if client is not None:
+      try:
+        print("Mengirim status offline dan memutus koneksi...")
+        client.publish(config.TOPIC_STATUS, b"offline", retain=True)
+        client.disconnect()
+      except Exception as e:
+        pass
 
 try:
   asyncio.run(main())
 except KeyboardInterrupt:
-  print("System stopped.")
+  pass

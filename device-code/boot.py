@@ -1,9 +1,15 @@
 import time
 import network
 from machine import Pin
+from umqtt.simple import MQTTClient
+import config
 
-# LED bawaan ESP32
 led = Pin(2, Pin.OUT)
+
+def setup_mqtt():
+  client = MQTTClient(client_id=config.DEVICE_ID, server=config.MQTT_BROKER, keepalive=8)
+  client.set_last_will(config.TOPIC_STATUS, b"offline", retain=True, qos=1)
+  return client
 
 def connect_wifi(ssid, password):
   wlan = network.WLAN(network.STA_IF)
@@ -22,14 +28,12 @@ def connect_wifi(ssid, password):
     print("Wifi terhubung!")
     print('Alamat IP ESP32:', wlan.ifconfig()[0])
 
-    # Nyalakan LED bawaan
     led.on()
 
     return True
   else:
     print("Gagal menghubungkan ke Wifi")
 
-    # Matikan LED jika gagal
     led.off()
 
     return False
