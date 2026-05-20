@@ -7,6 +7,7 @@ import dht
 import math
 import config
 import ujson
+import machine
 
 device_id = config.DEVICE_ID
 
@@ -57,7 +58,7 @@ async def read_sensor ():
       print(f"[MQ-2] Consentration: {payload['gas']} ppm")
     except Exception as e:
       print(f"Failed to read full sensor!! Error:{e}")
-    await asyncio.sleep(1)
+    await asyncio.sleep(2)
 
 def setup_lcd():
   print("Initializing LCD...")
@@ -112,6 +113,7 @@ async def send_telementry():
         client.publish(config.TOPIC_DATA, json_payload)
       except Exception as e:
         print("Gagal mengirim data:", e)
+        machine.reset()
     await asyncio.sleep(5)
 
 def count_ppm(raw_adc):
@@ -195,7 +197,6 @@ async def main():
   finally:
     if client is not None:
       try:
-        print("Mengirim status offline dan memutus koneksi...")
         client.publish(config.TOPIC_STATUS, b"offline", retain=True)
         client.disconnect()
       except Exception as e:

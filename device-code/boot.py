@@ -7,7 +7,7 @@ import config
 led = Pin(2, Pin.OUT)
 
 def setup_mqtt():
-  client = MQTTClient(client_id=config.DEVICE_ID, server=config.MQTT_BROKER, keepalive=8)
+  client = MQTTClient(client_id=config.DEVICE_ID, server=config.MQTT_BROKER, keepalive=10)
   client.set_last_will(config.TOPIC_STATUS, b"offline", retain=True, qos=1)
   return client
 
