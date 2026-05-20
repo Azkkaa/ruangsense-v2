@@ -4,6 +4,7 @@ import http from 'http'
 import app from './src/app.js'
 import connectDB from './src/config/db.js'
 import { Server } from 'socket.io'
+import { startListening } from './src/services/mqttHandler.js'
 
 const PORT = process.env.PORT
 
@@ -17,7 +18,7 @@ const io = new Server(httpServer, {
 })
 
 io.on('connection', (socket) => {
-  console.log(`[Socket] Client Connected: ${socket.id}`)   // socket.id is make by socket.io for giving "name" from frontend
+  console.log(`[Socket] Client Connected: ${socket.id}`)
 
   socket.on('join-device-room', (device_id) => {
     socket.join(device_id)
@@ -39,6 +40,7 @@ app.set('io', io)
 const startServer = async () => {
   try {
     await connectDB()
+    startListening(io)
     httpServer.listen(PORT, () => {
       console.log(`Server is listening on port ${PORT}...`)
     })

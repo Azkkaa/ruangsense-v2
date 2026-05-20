@@ -1,29 +1,38 @@
 import Device from '../models/Device.js'
 import SensorLog from '../models/SensorLog.js'
 
-export const createSensorLogData = async (req, res) => {
+export const createSensorLogData = async (deviceId, data, io) => {
   try {
-    const {
-      device_id,
-      temp,
-      temp_status,
-      humid,
-      humid_status,
-      gas,
-      gas_status
-    } = req.body
+    let status = {}
+    const { temp, humid, gas } = data
+
+    // Determine Temperature status
+    if (temp <= 22) status.temp_status = "cold"
+    else if (temp < 32) status.temp_status = "normal"
+    else if (temp < 40) status.temp_status = "hot"
+    else status.temp_status = "very hot"
+
+    // Determine Humid status
+    if (humid <= 40) status.humid_status = "very dry"
+    else if (humid < 65) status.humid_status = "dry"
+    else if (humid < 85) status.humid_status = "normal"
+    else status.humid_status = "humid"
+
+    // Determine Gas status
+    if (gas <= 70) status.gas_status = "normal"
+    else if (gas < 150) status.gas_status = "warning"
+    else if (gas < 400) status.gas_status ="danger"
+    else status.gas_status = "critical"
 
     const newData = await SensorLog.create({
-      device_id,
+      device_id: deviceId,
       temp,
-      temp_status,
+      temp_status: status.temp_status,
       humid,
-      humid_status,
+      humid_status: status.humid_status,
       gas,
-      gas_status
+      gas_status: status.gas_status
     })
-
-    const io = res.app.get('io')
 
     const date = new Date(newData.updatedAt)
     const hours = date.getHours().toString().padStart(2, '0')
@@ -31,27 +40,21 @@ export const createSensorLogData = async (req, res) => {
     const second = date.getSeconds().toString().padStart(2, '0')
 
     const payload = {
-      temp: newData.temp,
-      temp_status: newData.temp_status,
-      humid: newData.humid,
-      humid_status: humid_status,
-      gas: newData.gas,
-      gas_status: newData.gas_status,
+      temp,
+      temp_status: status.temp_status,
+      humid,
+      humid_status: status.humid_status,
+      gas,
+      gas_status: status.gas_status,
       time: `${hours}:${minutes}:${second}`
     }
 
-    io.to(device_id).emit('v2-device-data', payload);
-    console.log(`[IoT Data] Broadcasted to room ${device_id}:`)
+    io.to(deviceId).emit('v2-device-data', payload);
+    console.log(`[IoT Data] Broadcasted data to room ${deviceId}:`, payload)
 
-    res.status(201).json({
-      success: true,
-      data: payload
-    })
+    return true;
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message
-    })
+    console.error("[SensorLogController] Error failed to process data:", err)
   }
 }
 
