@@ -8,14 +8,16 @@ import {
 } from 'recharts';
 import { 
   ThermometerIcon, DropIcon, WindIcon,
-  LightningIcon, CaretLeftIcon, CircleIcon,
+  LightningIcon, CaretLeftIcon,
 } from '@phosphor-icons/react';
 import { useEffect, useState } from 'react';
 import StatusElement from '../components/StatusElement';
 import { io } from 'socket.io-client';
+import DeviceStatus from '../components/DeviceStatus';
 
 export default function DeviceMonitor() {
-  const [chartData, setChartData] = useState([])
+  const [chartData, setChartData] = useState([]);
+  const [isDeviceOnline, setIsDeviceOnline] = useState(false);
   const { deviceId } = useParams();
   const navigate = useNavigate();
 
@@ -62,6 +64,10 @@ export default function DeviceMonitor() {
       })
     })
 
+    socket.on('v2-device-status', (payload) => {
+      setIsDeviceOnline(payload.status === 'online')
+    })
+
     return () => {
       socket.emit('leave-device-room', deviceId)
       socket.disconnect()
@@ -96,10 +102,7 @@ export default function DeviceMonitor() {
                 <h1 className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-white to-gray-300">
                   Main Laboratory
                 </h1>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                  <CircleIcon size={8} weight="fill" className="text-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">Online</span>
-                </div>
+                <DeviceStatus status={isDeviceOnline} />
               </div>
               <p className="text-xs text-gray-500 font-mono mt-0.5">{deviceId}</p>
             </div>
