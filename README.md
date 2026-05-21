@@ -1,3 +1,4 @@
+Baca dalam bahasa lain: [English](README-EN.md)
 
 # RuangSense-v2 ❄️
 > **Platform & Dashboard IoT Modern untuk Monitoring Lingkungan Ruangan secara Real-time.**
@@ -73,13 +74,14 @@ Buat file `.env` di dalam folder `backend/` dan sesuaikan variabelnya:
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/ruangsense_v2
+MQTT_BROKER=mqtt://broker.emqx.io
 ```
 
 Jalankan server backend:
 
 ```bash
 npm run server
-# atau
+# atau menggunakan nodemon
 nodemon server.js
 ```
 
