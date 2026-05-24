@@ -42,11 +42,11 @@ RuangSense-v2 adalah aplikasi dashboard IoT premium berbasis web yang dirancang 
 
 ## 📐 Arsitektur Aliran Data Real-time
 
-1. **Hardware Layer**: Perangkat ESP32 membaca data lingkungan secara periodik.
-2. **Network Layer**: ESP32 mengirim data melalui HTTP POST ke public URL yang disediakan oleh **ngrok**.
-3. **Tunneling Layer**: **ngrok** meneruskan request HTTP POST tersebut langsung ke lokal port Express Server Anda.
-4. **Backend Layer (Controller)**: Express menangkap data tersebut, lalu menggunakan perintah `io.to(device_id).emit('v2-device-data', payload)` untuk membroadcast data spesifik ke kamar socket yang dituju.
-5. **Frontend Layer (React)**: Browser yang berada di dalam room tersebut menangkap data dan langsung memperbarui grafik serta tabel secara instan.
+1. **Hardware Layer**: Perangkat ESP32 membaca data lingkungan (seperti suhu, kelembapan, dan kadar gas) secara periodik dari sensor.
+2. **Network Layer (MTQQ)**: ESP32 mengirimkan (publish) payload data tersebut ke sebuah MQTT Broker melalui protokol MQTT pada topik yang spesifik.
+3. **Broker Layer**: **MQTT Broker** menerima pesan dari ESP32 dan bertugas mendistribusikan data tersebut secara instan ke semua klien yang berlangganan (subscribe) pada topik tersebut.
+4. **Backend Layer (Node.js/Express)**: Server backend bertindak sebagai klien MQTT yang melakukan subscribe ke topik terkait. Saat data masuk dari broker, backend menangkap data tersebut, lalu menggunakan perintah `io.to(device_id).emit('v2-device-data', payload)` melalui Socket.IO untuk membroadcast data spesifik ke kamar (room) yang dituju.
+5. **Frontend Layer (React)**: Browser yang berada di dalam room tersebut menangkap event socket dari backend dan langsung memperbarui grafik serta tabel pemantauan secara instan.
 
 ---
 
@@ -122,11 +122,8 @@ Saat ESP32 mengirim data ke backend, pastikan struktur payload JSON berbentuk se
 {
   "device_id": "Device-ID",
   "temp": 25.5,
-  "temp_status": "normal",
   "humid": 55,
-  "humid_status": "normal",
   "gas": 42,
-  "gas_status": "normal",
   "time": "14:47:25"
 }
 ```

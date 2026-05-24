@@ -42,11 +42,11 @@ RuangSense-v2 is a premium web-based IoT dashboard application engineered to mon
 
 ## 📐 Real-time Data Flow Architecture
 
-1. **Hardware Layer**: The ESP32 microcontroller reads environmental data from the attached sensors periodically.
-2. **Network Layer**: The ESP32 transmits this payload via an HTTP POST request directed to the public URL exposed by **ngrok**.
-3. **Tunneling Layer**: **ngrok** securely forwards the HTTP POST request straight to your local Express server port.
-4. **Backend Layer (Controller)**: Express intercepts the payload and invokes `io.to(device_id).emit('v2-device-data', payload)` to broadcast device-specific telemetry exclusively to its designated socket room.
-5. **Frontend Layer (React)**: Browsers connected within that specific room catch the socket event and instantly update the charts and data tables on the fly.
+1. **Hardware Layer**: The ESP32 device periodically reads environmental data (such as temperature, humidity, and gas levels) from the sensors.
+2. **Network Layer (MQTT)**: The ESP32 sends (publishes) the data payload to an MQTT Broker via the MQTT protocol on a specific topic.
+3. **Broker Layer**: The **MQTT Broker** receives the message from the ESP32 and instantly distributes the data to all clients subscribed to that topic.
+4. **Backend Layer (Node.js/Express)**: The backend server acts as an MQTT client, subscribing to the relevant topic. When data arrives from the broker, the backend captures it and uses the `io.to(device_id).emit('v2-device-data', payload)` command via Socket.IO to
+5. **Frontend Layer (React)**: The browser connected to that room listens for the socket event from the backend and instantly updates the monitoring charts and tables.
 
 ---
 
