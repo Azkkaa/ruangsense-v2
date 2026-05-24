@@ -67,10 +67,12 @@ export const getDeviceSensorLogData = async (req, res) => {
     const deviceId = req.params.deviceId
 
     const logData = await SensorLog.find({ device_id: deviceId }).sort({createdAt: -1}).limit(10)
+    const deviceStatus = await Device.findOne({ device_id: deviceId })
 
     res.status(200).json({
       success: true,
-      logs: logData
+      logs: logData,
+      isOnline: deviceStatus.status
     })
   } catch (err) {
     res.status(500).json({

@@ -14,10 +14,12 @@ import { useEffect, useState } from 'react';
 import StatusElement from '../components/StatusElement';
 import { io } from 'socket.io-client';
 import DeviceStatus from '../components/DeviceStatus';
+import DeviceMonitorSkeleton from '../components/DeviceMonitorSkeleton';
 
 export default function DeviceMonitor() {
   const [chartData, setChartData] = useState([]);
   const [isDeviceOnline, setIsDeviceOnline] = useState(false);
+  const [isLoading, setIsLoading] = useState(true)
   const { deviceId } = useParams();
   const navigate = useNavigate();
 
@@ -42,6 +44,8 @@ export default function DeviceMonitor() {
             gas_status: log.gas_status
           }
         }))
+        setIsDeviceOnline(res.data.isOnline)
+        setIsLoading(false)
       } catch (err) {
         alert('Something went wrong!')
         console.error("Error:", err)
@@ -75,6 +79,8 @@ export default function DeviceMonitor() {
   }, [deviceId])
 
   if (!deviceId) return <Navigate to="/search-device"/>
+
+  if (isLoading) return <DeviceMonitorSkeleton />
 
   return (
     <div className="min-h-screen bg-[#000000] text-white font-sans selection:bg-[#7b1779]/50 overflow-x-hidden">

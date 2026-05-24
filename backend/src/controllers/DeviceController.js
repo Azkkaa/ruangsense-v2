@@ -44,6 +44,11 @@ export const getDeviceUser = async (req, res) => {
 
 export const realtimeDeviceStatus = async (statusPayload, io) => {
   try {
+    let deviceStatus;
+    if (statusPayload.status === 'online') deviceStatus = true
+    if (statusPayload.status === 'offline') deviceStatus = false
+    await Device.findOneAndUpdate({device_id: statusPayload.deviceId}, {status: deviceStatus})
+
     io.to(statusPayload.deviceId).emit('v2-device-status', statusPayload)
 
     console.log(`[DeviceController] Broadcasted status to room ${statusPayload.deviceId}:`, statusPayload)
