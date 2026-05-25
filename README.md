@@ -35,8 +35,8 @@ RuangSense-v2 adalah aplikasi dashboard IoT premium berbasis web yang dirancang 
 
 ### Hardware & Peripherals (Simulation/Production)
 - **ESP32 Microcontroller** (WiFi Connection Enabled)
-- **Sensors**: DHT11/DHT22 (Suhu & Kelembaban), MQ-Series (Kualitas Udara/Asap/Gas)
-- **Tunneling**: **ngrok** (Shared Hosted Public Tunnel untuk menjembatani ESP32 ke Localhost Server)
+- **Sensors**: DHT22 (Suhu & Kelembaban), MQ-2 / MQ-Series (Kualitas Udara/Asap/Gas)
+- **Communication & Broker**: **MQTT Broker** (seperti HiveMQ / Mosquitto / EMQX) sebagai media perantara data *real-time* berbasis *publish/subscribe* antara ESP32 dan Backend Server.
 
 ---
 

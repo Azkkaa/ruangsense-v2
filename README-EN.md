@@ -35,8 +35,8 @@ RuangSense-v2 is a premium web-based IoT dashboard application engineered to mon
 
 ### Hardware & Peripherals (Simulation/Production)
 - **ESP32 Microcontroller** (WiFi Connection Enabled)
-- **Sensors**: DHT11/DHT22 (Temperature & Humidity), MQ-Series (Air Quality/Smoke/Gas Detection)
-- **Tunneling**: **ngrok** (Secure Public Tunneling to bridge ESP32 telemetry with Localhost Servers)
+- **Sensors**: DHT22 (Temperature & Humidity), MQ-2 / MQ-Series (Air Quality/Smoke/Gas)
+- **Communication & Broker**: **MQTT Broker** (e.g., HiveMQ / Mosquitto / EMQX) acting as the central hub for *publish/subscribe* real-time data exchange between the ESP32 and the Backend Server.
 
 ---
 
