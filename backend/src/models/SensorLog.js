@@ -1,9 +1,17 @@
 import mongoose from 'mongoose'
+import Device from './Device.js'
 
 const sensorSchema = new mongoose.Schema({
   device_id: {
     type: String,
-    required: [true, 'Device ID must be filled!']
+    required: [true, 'Device ID must be filled!'],
+    validate: {
+      validator: async function(value) {
+        const device = await Device.findOne({ device_id: value })
+        return !!device
+      },
+      message: 'Device ID {VALUE} does not exist in registered devices!'
+    }
   },
   temp: {
     type: Number,

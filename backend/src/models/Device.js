@@ -15,6 +15,18 @@ const deviceSchema = new mongoose.Schema({
     required: false,
     default: false
   },
+  battery: {
+    type: Number,
+    required: false,
+    min: 0,
+    max: 100,
+    default: 100
+  },
+  charge_status: {
+    type: Boolean,
+    required: false,
+    default: false
+  },
   last_seen: {
     type: Date,
     default: Date.now

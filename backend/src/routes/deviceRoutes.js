@@ -1,5 +1,5 @@
 import express from 'express'
-import { createDevice, getDeviceUser } from '../controllers/DeviceController.js'
+import { createDevice, getDeviceUser } from '../controllers/deviceController.js'
 
 const router = express.Router()
 

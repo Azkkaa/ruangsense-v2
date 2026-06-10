@@ -6,6 +6,11 @@ export const createSensorLogData = async (deviceId, data, io) => {
     let status = {}
     const { temp, humid, gas } = data
 
+    // Fetch latest battery & charge_status from Device collection
+    const device = await Device.findOne({ device_id: deviceId })
+    const battery = device ? device.battery : 100
+    const charge_status = device ? device.charge_status : false
+
     // Determine Temperature status
     if (temp <= 22) status.temp_status = "cold"
     else if (temp < 32) status.temp_status = "normal"
@@ -31,7 +36,9 @@ export const createSensorLogData = async (deviceId, data, io) => {
       humid,
       humid_status: status.humid_status,
       gas,
-      gas_status: status.gas_status
+      gas_status: status.gas_status,
+      battery,
+      charge_status
     })
 
     const date = new Date(newData.updatedAt)
@@ -46,6 +53,8 @@ export const createSensorLogData = async (deviceId, data, io) => {
       humid_status: status.humid_status,
       gas,
       gas_status: status.gas_status,
+      battery,
+      charge_status,
       time: `${hours}:${minutes}:${second}`
     }
 
