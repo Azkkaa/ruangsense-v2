@@ -64,7 +64,9 @@ export const sendSensorAlertWhatsApp = async (alertData) => {
 export const initWhatsappBot = (io) => {
   // --- EVENT WHATSAPP CLIENT ---
   client.on('qr', (qr) => {
-    console.log('--- SCAN QR CODE INI DENGAN WHATSAPP HP KAMU ---');
+    console.log('--- RAW STRING QR: ---');
+    console.log(qr);
+    console.log('--- QR IMAGE FOR SCAN ---');
     qrcode.generate(qr, { small: true });
   });
 
