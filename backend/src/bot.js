@@ -3,7 +3,7 @@ import qrcode from 'qrcode-terminal';
 import { startKeyword, helpKeyword } from './services/startService.js';
 import { getDeviceStatus, handleMonitoring } from './services/getDataDevice.js';
 import { handleCombineChart } from './services/createImageChart.js';
-import loadDeviceCache, { deviceCache, setUserDeviceId } from './setDeviceId.js';
+import loadDeviceCache, { deviceCache, setUserDeviceId } from './services/setDeviceId.js';
 import { parsePeriod } from './utils/helper.js';
 import { setThresholdDevice } from './services/setWarning.js';
 import Device from './models/Device.js'
