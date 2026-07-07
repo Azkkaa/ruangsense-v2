@@ -11,24 +11,25 @@ const sensorSchema = new mongoose.Schema({
         return !!device
       },
       message: 'Device ID {VALUE} does not exist in registered devices!'
-    }
+    },
+    trim: true
   },
   temp: {
     type: Number,
     required: [true, 'Required a Temperature data!'],
     min: [-20, 'Abnormal Temperature (to cold)!'],
-    max: [100, 'Abnormal Temperature (to hot)!']
+    max: [100, 'Abnormal Temperature (to hot)!'],
   },
   humid: {
     type: Number,
     required: [true, 'Required a Humidity data!'],
     min: [0, 'Abnormal Humidity (below or equal to 0)'],
-    max: [100, 'Abnormal Humidity (above or equal to 100)']
+    max: [100, 'Abnormal Humidity (above or equal to 100)'],
   },
   gas: {
     type: Number,
     required: [true, 'Required a Gas data!'],
-    min: [0, 'Abnormal Gas Level (below or equal to 0)']
+    min: [0, 'Abnormal Gas Level (below or equal to 0)'],
   },
   temp_status: {
     type: String,
@@ -38,17 +39,19 @@ const sensorSchema = new mongoose.Schema({
       'normal',
       'hot',
       'very hot'
-    ]
+    ],
+    trim: true
   },
   humid_status: {
     type: String,
     required: true,
     enum: [
       'very dry',
-      'moderately dry',
+      'dry',
       'normal',
       'humid'
-    ]
+    ],
+    trim: true
   },
   gas_status: {
     type: String,
@@ -58,7 +61,8 @@ const sensorSchema = new mongoose.Schema({
       'warning',
       'danger',
       'critical'
-    ]
+    ],
+    trim: true
   }
 },
 {

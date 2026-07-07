@@ -1,9 +1,11 @@
 import express from 'express'
-import { getDeviceSensorLogData, createSensorLogData } from '../controllers/sensorLogController.js'
+import { createSensorLogDataHttp, getSensorLogData, getTypeMonitoring } from '../controllers/sensorLogController.js'
 
 const router = express.Router()
 
-router.post('/create', createSensorLogData)
-router.get('/:deviceId', getDeviceSensorLogData)
+router.get('/:deviceId', getSensorLogData)
+router.get('/:deviceId/:command', getTypeMonitoring)
+
+router.post('/create', createSensorLogDataHttp)
 
 export default router;

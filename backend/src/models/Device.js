@@ -4,34 +4,37 @@ const deviceSchema = new mongoose.Schema({
   name: {
     type: String,
     required: false,
-    default: 'device-name'
+    default: 'device-name',
+    trim: true
   },
   device_id: {
     type: String,
-    required: true
+    required: [true, "Device ID must be field"],
+    trim: true,
+    unique: [true, "This Device ID is already exist"]
   },
   status: {
     type: Boolean,
     required: false,
     default: false
   },
-  battery: {
+  threshold_gas: {
     type: Number,
-    required: false,
-    min: 0,
-    max: 100,
-    default: 100
+    default: 10
   },
-  charge_status: {
+  threshold_temp: {
+    type: Number,
+    default: 34
+  },
+  buzzer_alarm_on: {
     type: Boolean,
-    required: false,
-    default: false
+    default: true
   },
   last_seen: {
     type: Date,
     default: Date.now
   }
-})
+}, { timestamps: true })
 
 const Device = mongoose.model('Device', deviceSchema)
 
