@@ -51,9 +51,9 @@ const FeaturesHome = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="group p-8 rounded-3xl bg-linear-to-b from-white/8 to-transparent border border-white/5 hover:border-white/10 hover:bg-white/12 transition-all duration-500 hover:-translate-y-2 backdrop-blur-sm"
+              className="p-8 rounded bg-linear-to-b from-white/8 to-transparent border border-white/5 hover:border-white/10 hover:bg-white/5 transition-all duration-500 backdrop-blur-sm"
             >
-              <div className="mb-6 p-4 rounded-2xl bg-black/50 inline-block border border-white/5 group-hover:scale-110 transition-transform duration-500">
+              <div className="mb-6 p-4 rounded-2xl bg-black/50 inline-block border border-white/5 transition-transform duration-500">
                 {feature.icon}
               </div>
               <h3 className="text-xl font-semibold mb-3 text-white">{feature.title}</h3>

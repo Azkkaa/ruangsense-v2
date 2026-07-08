@@ -1,6 +1,5 @@
 import {
-  GithubLogoIcon,
-  TwitterLogoIcon
+  GithubLogoIcon
 } from '@phosphor-icons/react'
 import logoRuangSense from '../assets/images/logo/logo_ruangsense-nobg.png'
 
@@ -18,11 +17,8 @@ const Footer = () => {
         </p>
 
         <div className="flex items-center gap-4">
-          <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-[#7b1779] transition-colors">
+          <a href="https://github.com/Azkkaa/ruangsense-v2" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-[#7b1779] transition-colors">
             <GithubLogoIcon size={20} weight="fill" />
-          </a>
-          <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-[#7b1779] transition-colors">
-            <TwitterLogoIcon size={20} weight="fill" />
           </a>
         </div>
       </div>
