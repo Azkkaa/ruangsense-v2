@@ -6,6 +6,6 @@ const router = express.Router()
 router.get('/:deviceId', getSensorLogData)
 router.get('/:deviceId/:command', getTypeMonitoring)
 
-router.post('/create', createSensorLogDataHttp)
+// router.post('/create', createSensorLogDataHttp)
 
 export default router;

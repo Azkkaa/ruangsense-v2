@@ -1,5 +1,5 @@
-import api from "../utils/api.js";
-import {extractPhoneNumber} from '../utils/helper.js'
+import UserDevice from "../models/UserDevice.js";
+import { extractPhoneNumber } from '../utils/helper.js';
 
 export const deviceCache = {};
 
@@ -20,44 +20,63 @@ export const setUserDeviceId = async (client, whatsappChatId, deviceId) => {
 
     const whatsappNumber = extractPhoneNumber(finalChatId);
 
-    await api.post('api/user-devices/create', {
-      device_id: deviceId,
-      whatsapp_chat_id: whatsappChatId,
-      whatsapp_number: whatsappNumber
-    });
+    const targetChatId = String(whatsappChatId || '').trim();
+    const targetNumber = String(whatsappNumber || '').trim();
+    const targetDeviceId = String(deviceId || '').trim();
 
-    deviceCache[whatsappChatId] = deviceId;
+    const invalidValues = ['[object Object]', 'undefined', 'null', ''];
+
+    if (
+      invalidValues.includes(targetChatId) ||
+      invalidValues.includes(targetNumber) ||
+      invalidValues.includes(targetDeviceId)
+    ) {
+      return {
+        success: false,
+        message: '❌ Format input tidak valid!'
+      };
+    }
+
+    await UserDevice.findOneAndUpdate(
+      { whatsapp_chat_id: targetChatId },
+      {
+        whatsapp_chat_id: targetChatId,
+        whatsapp_number: targetNumber,
+        device_id: targetDeviceId
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true
+      }
+    );
+    deviceCache[whatsappChatId] = targetDeviceId;
 
     return {
       success: true,
-      message: `✅ Berhasil menautkan device *${deviceId}* ke nomor WhatsApp kamu!`
-    }
+      message: `✅ Berhasil menautkan device *${targetDeviceId}* ke nomor WhatsApp kamu!`
+    };
   } catch (err) {
-    console.error("[SetUserDeviceId] Status:", err.response?.status);
-    console.error("[SetUserDeviceId] Data:", err.response?.data);
-    console.error("[SetUserDeviceId] Message:", err.message);
+    console.error("[SetUserDeviceId Refactor Error]:", err.message);
 
     return {
       success: false,
-      message: '❌ Gagal menyimpan konfigurasi ke server.'
-    }
+      message: '❌ Gagal menyimpan konfigurasi pairing ke database.'
+    };
   }
 };
 
 const loadDeviceCache = async () => {
   try {
-    const res = await api.get('api/user-devices')
-    const pairings = res.data.pairings;
+    const pairings = await UserDevice.find({}, { whatsapp_number: 1, whatsapp_chat_id: 1, device_id: 1, _id: 0 });
 
     pairings.forEach((item) => {
       deviceCache[item.whatsapp_chat_id] = item.device_id;
     });
-    console.log(`✅ Cache berhasil dimuat: ${pairings.length} device terdaftar.`)
+    console.log(`✅ Cache berhasil dimuat: ${pairings.length} device terdaftar.`);
   } catch (err) {
-    console.error("[LoadDeviceCache]Status:", err.response?.status);
-    console.error("[LoadDeviceCache]Data:", err.response?.data);
-    console.error("[LoadDeviceCache]Message:", err.message);
+    console.error("[LoadDeviceCache Refactor Error]:", err.message);
   }
-}
+};
 
 export default loadDeviceCache;

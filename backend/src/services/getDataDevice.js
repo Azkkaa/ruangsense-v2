@@ -1,8 +1,10 @@
-import api from '../utils/api.js';
-import { emojiStatusCondition, formatDateTime } from '../utils/helper.js';
+import Device from '../models/Device.js';
+import SensorLog from '../models/SensorLog.js';
+import UserDevice from '../models/UserDevice.js';
+import { emojiStatusCondition, formatDateTime, formatAndMaskResponse } from '../utils/helper.js';
 
 /**
- * Getting Device Status
+ * Getting Device Status Directly from DB
  *
  * @async
  * @param {string} deviceId 
@@ -10,11 +12,23 @@ import { emojiStatusCondition, formatDateTime } from '../utils/helper.js';
  */
 export const getDeviceStatus = async (deviceId) => {
   try {
-    console.log(deviceId)
-    const res = await api.get(`/api/device/${deviceId}/status`);
+    console.log("Fetching status from DB for device:", deviceId);
 
-    const logs = res.data.logs;
-    const isOnline = res.data.isOnline;
+    const device = await Device.findOne({ device_id: deviceId });
+
+    if (!device) {
+      return `❌ Device dengan ID *${deviceId}* tidak ditemukan!`;
+    }
+
+    const [logs, userDevice] = await Promise.all([
+      SensorLog.find({ device_id: deviceId })
+        .sort({ createdAt: -1 })
+        .limit(10),
+      UserDevice.findOne({ device_id: deviceId }).select('whatsapp_number')
+    ]);
+
+    const isOnline = device.status;
+    const lastSeenData = device.status ? null : device.last_seen;
 
     // 1. Validation if logs empty
     if (!logs || logs.length === 0) {
@@ -38,13 +52,13 @@ export const getDeviceStatus = async (deviceId) => {
     const gasAverage = (gasValue / dataAmount).toFixed(1);
 
     // 4. Susun teks laporan untuk WhatsApp
-    const status = isOnline === 'Online' || isOnline === true ? '🟢 Online' : '🔴 Offline';
+    const status = isOnline ? '🟢 Online' : '🔴 Offline';
 
     const messageResponse = `
 *📱 STATUS DEVICE*
 ━━━━━━━━━━━━━━━━━━
 
-🔌 *Status:* ${status}${!isOnline ? `\n🕧 *Aktivitas Terakhir:* ${formatDateTime(res.data.last_seen)}` : ''}
+🔌 *Status:* ${status}${!isOnline && lastSeenData ? `\n🕧 *Aktivitas Terakhir:* ${formatDateTime(lastSeenData)}` : ''}
 🧾 Diambil dari *${dataAmount}* log data terakhir
 
 *Rata-rata Kondisi Ruangan:*
@@ -58,31 +72,40 @@ _(Data ini dihitung berdasarkan rata-rata 10 riwayat sensor terbaru)_
     return messageResponse;
 
   } catch (err) {
-    console.error("Status:", err.response?.status);
-    console.error("Data:", err.response?.data);
-    console.error("Message:", err.message);
-    return "❌ Gagal memuat operasi. Silakan coba beberapa saat lagi.";
+    console.error("[getDeviceStatus Refactor Error]:", err.message);
+    return "❌ Gagal memuat status device dari database. Silakan coba beberapa saat lagi.";
   }
 }
 
 export const handleMonitoring = async (command, deviceId) => {
   try {
-    const res = await api.get(`/api/sensor-log/${deviceId}/${command}`)
-
-    const logs = res.data.logs
-
-    if (!logs || logs.length === 0) {
-      return "📊 *Data Sensor:* Data log masih kosong. Tunggu beberapa saat atau periksakan device anda."
-    }
-
     const typeMeaning = {
       'suhu': 'temp',
       'kelembapan': 'humid',
       'gas': 'gas'
     };
 
-    const dataAmount = logs.length
-    const total = logs.reduce((sum, log) => sum + (log[typeMeaning[command]] || 0), 0);
+    const typeOriginal = typeMeaning[command];
+    if (!typeOriginal) {
+      return "❌ Perintah tidak valid!";
+    }
+
+    let projection = {};
+    projection[typeOriginal] = 1;
+    projection[`${typeOriginal}_status`] = 1;
+    projection['createdAt'] = 1;
+
+    const logs = await SensorLog.find(
+      { device_id: deviceId },
+      projection
+    ).sort({ createdAt: -1 }).limit(20);
+
+    if (!logs || logs.length === 0) {
+      return "📊 *Data Sensor:* Data log masih kosong. Tunggu beberapa saat atau periksakan device anda.";
+    }
+
+    const dataAmount = logs.length;
+    const total = logs.reduce((sum, log) => sum + (log[typeOriginal] || 0), 0);
     const average = (total / dataAmount).toFixed(2);
 
     let emoji = '';
@@ -91,8 +114,18 @@ export const handleMonitoring = async (command, deviceId) => {
     if (command === 'kelembapan') { emoji = '💧'; unit = '%'; }
     if (command === 'gas') { emoji = '💨'; unit = ' PPM'; }
 
-    const status = logs[0][`${typeMeaning[command]}_status`]
-    const emojiStatus = emojiStatusCondition(typeMeaning[command], status);
+    const status = logs[0][`${typeOriginal}_status`] || 'undefined';
+    const emojiStatus = emojiStatusCondition(typeOriginal, status);
+
+    const lastLogDate = new Date(logs[0].createdAt);
+    const day = String(lastLogDate.getDate()).padStart(2, '0');
+    const month = String(lastLogDate.getMonth() + 1).padStart(2, '0'); // Month berkisar 0-11
+    const year = lastLogDate.getFullYear();
+    const hours = String(lastLogDate.getHours()).padStart(2, '0');
+    const minutes = String(lastLogDate.getMinutes()).padStart(2, '0');
+    const seconds = String(lastLogDate.getSeconds()).padStart(2, '0');
+
+    const formattedTime = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 
     return `
 ${emoji} *Monitoring ${command.toUpperCase()}* ${emoji}
@@ -100,15 +133,15 @@ ${emoji} *Monitoring ${command.toUpperCase()}* ${emoji}
 🧾 Diambil dari *${dataAmount}* log data ${command} terakhir
 
 *📌 Kondisi Terakhir (Terbaru):*
-✅ Nilai Terakhir: ${logs[0][typeMeaning[command]]} ${unit}
-${emojiStatus} Status : *${status.toUpperCase()}*
+📅 Waktu         : ${formattedTime}
+✅ Nilai Terakhir: ${logs[0][typeOriginal]} ${unit}
+${emojiStatus} Status        : *${status.toUpperCase()}*
 
 📈 *Analisis Rata-Rata:* *${average}${unit}*
-    `.trim()
+    `.trim();
+    
   } catch (err) {
-    console.error("Status:", err.response?.status);
-    console.error("Data:", err.response?.data);
-    console.error("Message:", err.message);
-    return "❌ Gagal mengambil data sensor dari server. Silakan coba beberapa saat lagi."
+    console.error("[handleMonitoring Refactor Error]:", err.message);
+    return "❌ Gagal mengambil data sensor dari database. Silakan coba beberapa saat lagi.";
   }
 }

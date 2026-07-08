@@ -1,4 +1,3 @@
-
 /**
  * Keyword for /start message
  *
@@ -6,29 +5,37 @@
  */
 export const startKeyword = () => {
   return `
-🤖 *DAFTAR PERINTAH BOT RUANGSENSE* 🤖
+🤖 *SELAMAT DATANG DI RUANGSENSE BOT* 🤖
+━━━━━━━━━━━━━━━━━━━━━━━━
 
-Berikut adalah perintah yang dapat Anda gunakan:
+Sistem asisten pintar untuk monitoring kondisi ruangan berbasis IoT.
 
-🔹 *Manajemen Perangkat*
-• \`!set [id_device]\` : Menghubungkan nomor WhatsApp ini dengan ID perangkat IoT Anda.
-• \`!start\` : Menampilkan pesan selamat datang awal.
-• \`!help\` : Menampilkan daftar bantuan/perintah ini.
+⚠️ *PEMBERITAHUAN PENTING:*
+Sebelum menggunakan fitur monitoring, Anda *WAJIB* menautkan nomor WhatsApp ini dengan ID perangkat IoT Anda menggunakan perintah:
+👉 \`!set [id_device]\` (Contoh: \`!set device_01\`)
+
+Berikut adalah daftar perintah lengkap yang dapat Anda gunakan setelah perangkat berhasil ditautkan:
+
+🔹 *Manajemen & Bantuan*
+• \`!set [id_device]\` : Menghubungkan nomor WhatsApp dengan ID perangkat IoT.
+• \`!start\` : Menampilkan pesan sambutan awal ini.
+• \`!help\` : Menampilkan panduan dan bantuan penggunaan bot.
 
 🔹 *Monitoring Sensor (Real-time)*
 • \`!suhu\` : Mengecek kondisi suhu terbaru di ruangan.
 • \`!kelembapan\` : Mengecek tingkat kelembapan terbaru.
-• \`!gas\` : Mengecek kadar kebocoran gas terbaru.
-• \`!status\` : Mengecek status ringkasan dan kesehatan perangkat.
+• \`!gas\` : Mengecek kadar kebocoran gas/indeks asap terbaru.
+• \`!status\` : Mengecek ringkasan status kelistrikan dan kesehatan perangkat.
 
 🔹 *Analisis Data & Grafik*
-• \`!grafik [periode]\` : Melihat grafik monitoring (Contoh: \`!grafik 7d\` atau \`!grafik 1w\`).
-• \`!grafik [id_device] [periode]\` : Melihat grafik perangkat secara manual tanpa perlu melakukan !set terlebih dahulu.
+• \`!grafik [periode]\` : Merender grafik analisis multivariabel (Contoh: \`!grafik 1d\`, \`!grafik 7d\`).
 
-🔹 *Konfigurasi Peringatan*
-• \`!set-warning [opsi] [nilai]\` : Mengatur ambang batas (threshold) bahaya sensor pada perangkat via server.
+🔹 *Konfigurasi Peringatan (Threshold)*
+• \`!set-warning [opsi] [nilai]\` : Mengubah ambang batas bahaya sensor langsung ke perangkat via server.
+  _(Pilihan opsi: temp / gas / buzzer)_
 
-⚠️ _Catatan: Untuk perintah sensor, status, grafik, dan set-warning, pastikan Anda sudah menautkan perangkat terlebih dahulu menggunakan perintah \`!set\``;
+🚨 *Sistem Peringatan Otomatis (Alert):*
+Bot akan otomatis mengirimkan pesan darurat (bencana/bahaya) jika sensor mendeteksi adanya suhu tinggi atau kebocoran gas yang melebihi ambang batas aman di ruangan Anda!`.trim();
 }
 
 /**
@@ -38,20 +45,24 @@ Berikut adalah perintah yang dapat Anda gunakan:
  */
 export const helpKeyword = () => {
   return `
-    **PANDUAN PENGGUNAAN RUANGSENSE BOT**
-    ━━━━━━━━━━━━━━━━━━
-    Mengalami kendala atau ingin tahu lebih lanjut? Berikut panduan perintah lengkapnya:
+💡 *PANDUAN PENGGUNAAN RUANGSENSE BOT* 💡
+━━━━━━━━━━━━━━━━━━━━━━━━
 
-    🌐 *Monitoring Perangkat:*
-      - *!start* : Mengulang kembali pesan sambutan.
-      - *!device [id_device] [action]* - Cek status koneksi perangkat ESP32.
+Mengalami kendala dalam menggunakan bot atau perangkat? Ikuti panduan ringkas berikut:
 
-    *📊 DATA SENSOR*
-      - *!sensor-log [id_device]* - Mengambil data terbaru dari sensor Device.
+1️⃣ *Tautkan Perangkat Terlebih Dahulu*
+Jika bot membalas dengan peringatan *"Perangkat belum ditautkan"*, ketik \`!set [id_device]\` menggunakan ID perangkat yang tertera pada modul fisik Anda.
 
-    🚨 *Sistem Peringatan (Alert):*
-    Bot ini akan otomatis mengirimkan pesan darurat jika sensor Device mendeteksi adanya asap atau gas yang melebihi ambang batas aman di ruangan Anda.
+2️⃣ *Format Perintah Operasional*
+Pastikan Anda mengetikkan perintah dengan benar menggunakan tanda seru (\`!\`) di depan kata:
+• Ingin tahu kondisi ruangan secara instan? Ketik \`!status\`, \`!suhu\`, \`!kelembapan\`, atau \`!gas\`.
+• Ingin melihat tren grafik? Ketik \`!grafik 1d\` (untuk 1 hari) atau \`!grafik 7d\` (untuk 1 minggu).
+• Ingin mengubah batas alarm buzzer? Ketik \`!set-warning buzzer off\` atau \`!set-warning buzzer on\`.
 
-    Jika perangkat Anda *offline* atau data tidak dapat diperbarui, silakan periksa koneksi internet pada perangkat ESP32 Anda.
-  `.trim().replace(/^[ \t]{4}/gm, '')
+3️⃣ *Masalah Konektivitas Perangkat*
+Jika indikator status menunjukkan 🔴 *Offline*, silakan periksa:
+• Sambungan daya adaptor pada perangkat keras IoT Anda.
+• Koneksi internet WiFi di area ruangan tempat perangkat diletakkan.
+
+Gunakan perintah \`!start\` kapan saja untuk melihat ringkasan visual menu petunjuk perintah utama.`.trim();
 }

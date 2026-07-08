@@ -1,22 +1,71 @@
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import whatsappWeb from 'whatsapp-web.js';
-import api from '../utils/api.js';
+import SensorLog from '../models/SensorLog.js'; // 1. Import model langsung di sini
 
 const width = 800; 
 const height = 500;
-const { MessageMedia } = whatsappWeb
+const { MessageMedia } = whatsappWeb;
 const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
 
 export const handleCombineChart = async (deviceId, totalDays, interval) => {
   try {
-    const res = await api.get(`/api/sensor-log/${deviceId}`, {
-      params: { 
-        days: totalDays,
-        interval: interval
-      }
-    });
+    const totalDaysParsed = parseInt(totalDays, 10) || 1;
 
-    const logs = res.data.logs;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - totalDaysParsed);
+
+    let groupFormat = {};
+
+    if (interval === '1h') {
+      groupFormat = {
+        year: { $year: '$createdAt' },
+        month: { $month: '$createdAt' },
+        day: { $dayOfMonth: '$createdAt' },
+        hour: { $hour: '$createdAt' }
+      };
+    } else if (interval === '6h') {
+      groupFormat = {
+        year: { $year: '$createdAt' },
+        month: { $month: '$createdAt' },
+        day: { $dayOfMonth: '$createdAt' },
+        hourBlock: {
+          $subtract: [
+            { $hour: '$createdAt' },
+            { $mod: [{ $hour: '$createdAt' }, 6] }
+          ]
+        }
+      };
+    } else if (interval === '1d') {
+      groupFormat = {
+        year: { $year: '$createdAt' },
+        month: { $month: '$createdAt' },
+        day: { $dayOfMonth: '$createdAt' }
+      };
+    }
+
+    const logs = await SensorLog.aggregate([
+      {
+        $match: {
+          device_id: deviceId,
+          createdAt: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: groupFormat,
+          avgTemp: { $avg: '$temp' },
+          avgHumid: { $avg: '$humid' },
+          avgGas: { $avg: '$gas' },
+          sampleDate: { $first: '$createdAt' }
+        }
+      },
+      {
+        $sort: { sampleDate: 1 }
+      },
+      {
+        $limit: 100
+      }
+    ]);
 
     if (!logs || logs.length === 0) {
       return "❌ Data log kosong untuk rentang waktu tersebut, tidak bisa membuat grafik.";
@@ -24,23 +73,18 @@ export const handleCombineChart = async (deviceId, totalDays, interval) => {
 
     // 2. Adaptive X-Axis Label Format
     const labelsWaktu = logs.map(log => {
-      const rawDate = log.sampleDate || log.createdAt || log.created_at;
       const tgl = new Date(log.sampleDate);
       
       const jam = String(tgl.getHours()).padStart(2, '0');
       const menit = String(tgl.getMinutes()).padStart(2, '0');
       
-      // If the interval is hourly, display the Time format (Hour:Minute)
       if (interval === '1h') {
         return `${jam}:${menit}`;
       } 
       
-      // If the interval is 6 hours or 1 day, display the Date format (Date Name-Month)
-      // Example: "16 June"
       const opsiTanggal = { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' };
       const formatTanggal = tgl.toLocaleDateString('id-ID', opsiTanggal);
       
-      // If the interval is 6h, we add the hour info behind it for details (Example: "June 16, 06:00")
       if (interval === '6h') {
         return `${formatTanggal} ${jam}:00`;
       }
@@ -48,7 +92,7 @@ export const handleCombineChart = async (deviceId, totalDays, interval) => {
       return formatTanggal;
     });
 
-    // 3. Extract Sensor Mean Values ​​from Backend Aggregation Array
+    // 3. Extract Sensor Mean Values ​​dari Array Aggregation
     const dataSuhu = logs.map(log => log.avgTemp !== null && log.avgTemp !== undefined ? log.avgTemp.toFixed(1) : null);
     const dataKelembapan = logs.map(log => log.avgHumid !== null && log.avgHumid !== undefined ? log.avgHumid.toFixed(1) : null);
     const dataGas = logs.map(log => log.avgGas !== null && log.avgGas !== undefined ? Math.round(log.avgGas) : null);
@@ -115,16 +159,16 @@ export const handleCombineChart = async (deviceId, totalDays, interval) => {
       }
     };
 
-    // 5. Render Chart to Image Buffer form (PNG)
+    // 5. Render Chart to Image Buffer (PNG)
     const imageBuffer = await chartJSNodeCanvas.renderToBuffer(configuration);
 
     // 6. Convert Buffer to WhatsApp Media object
     const media = new MessageMedia('image/png', imageBuffer.toString('base64'), 'grafik-monitoring.png');
 
-    // 7. Prepare the caption text for your WA message
-    let infoRentang = `${totalDays} Hari Terakhir`;
-    if (totalDays % 30 === 0) infoRentang = `${totalDays / 30} Bulan Terakhir`;
-    if (totalDays % 7 === 0 && totalDays < 30) infoRentang = `${totalDays / 7} Minggu Terakhir`;
+    // 7. WA caption text
+    let infoRentang = `${totalDaysParsed} Hari Terakhir`;
+    if (totalDaysParsed % 30 === 0) infoRentang = `${totalDaysParsed / 30} Bulan Terakhir`;
+    if (totalDaysParsed % 7 === 0 && totalDaysParsed < 30) infoRentang = `${totalDaysParsed / 7} Minggu Terakhir`;
 
     return {
       media: media,
@@ -132,9 +176,7 @@ export const handleCombineChart = async (deviceId, totalDays, interval) => {
     };
 
   } catch (err) {
-    console.error("Status:", err.response?.status);
-    console.error("Data:", err.response?.data);
-    console.error("Message:", err.message);
-    return "❌ Gagal mengambil data sensor dari server. Silakan coba beberapa saat lagi."
+    console.error("[handleCombineChart Error]:", err.message);
+    return "❌ Gagal memproses grafik langsung dari database. Silakan coba beberapa saat lagi.";
   }
 };

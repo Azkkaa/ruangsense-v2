@@ -3,7 +3,7 @@ import {
   createDevice,
   getDeviceId,
   getDeviceStatus,
-  updateDeviceConfigHTTP
+  // updateDeviceConfigHTTP
 } from '../controllers/deviceController.js'
 
 const router = express.Router()
@@ -13,6 +13,6 @@ router.get('/:deviceId/status', getDeviceStatus)
 
 router.post('/create', createDevice)
 
-router.patch('/update-config', updateDeviceConfigHTTP)
+// router.patch('/update-config', updateDeviceConfigHTTP)
 
 export default router;

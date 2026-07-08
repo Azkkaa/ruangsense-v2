@@ -3,8 +3,8 @@ import { createWhatsappUserDevice, getAllWhatsappUserDevices } from '../controll
 
 const router = express.Router()
 
-router.get('/', getAllWhatsappUserDevices)
+// router.get('/', getAllWhatsappUserDevices)
 
-router.post('/create', createWhatsappUserDevice)
+// router.post('/create', createWhatsappUserDevice)
 
 export default router;

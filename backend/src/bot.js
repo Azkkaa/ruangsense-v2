@@ -12,11 +12,21 @@ const { Client, LocalAuth } = whatsappWeb;
 export const lastDeviceAlerts = new Map();
 
 export const client = new Client({
-  authStrategy: new LocalAuth(),
+  authStrategy: new LocalAuth({
+    clientId: "ruangsense-session"
+  }),
   puppeteer: {
-    handleSIGINT: false,
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-extensions']
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-gpu'
+    ]
   }
 });
 
@@ -42,13 +52,21 @@ export const sendSensorAlertWhatsApp = async (alertData) => {
   }
 
   const now = Date.now();
-  const alertBefore = lastDeviceAlerts.get(device_id);
-  const isMoreFiveMin = alertBefore && now - alertBefore.timestamp >= 5 * 60 * 1000;
+  const lastAlert = lastDeviceAlerts.get(device_id) || { tempTimestamp: 0, gasTimestamp: 0 };
 
-  if (!alertBefore || isMoreFiveMin) {
+  const canAlertTemp = isTempDanger && (now - lastAlert.tempTimestamp >= 5 * 60 * 1000);
+  const canAlertGas = isGasDanger && (now - lastAlert.gasTimestamp >= 5 * 60 * 1000);
+
+  if (!canAlertTemp || canAlertGas) {
     let alertMessage = `🚨 *NOTIFIKASI PERINGATAN*\n\nWaktu Kejadian: *${time}*\nID Perangkat: *${device_id}*\n\n`;
-    if (isTempDanger) alertMessage += `🌡️ Suhu Mencapai Threshold: *${temp_value}°C*\n`;
-    if (isGasDanger) alertMessage += `💨 Sensor Gas Mencapai Threshold: *${gas_value} ppm*\n`;
+    if (canAlertTemp) {
+      alertMessage += `🌡️ Suhu Mencapai Threshold: *${temp_value}°C*\n`;
+      lastAlert.tempTimestamp = now;
+    }
+    if (canAlertGas) {
+      alertMessage += `💨 Sensor Gas Mencapai Threshold: *${gas_value} ppm*\n`;
+      lastAlert.gasTimestamp = now;
+    }
     alertMessage += `\n_Mohon segera lakukan pengecekan fisik pada ruangan terkait!_`;
 
     try {
@@ -66,8 +84,6 @@ export const initWhatsappBot = (io) => {
   client.on('qr', (qr) => {
     console.log('--- RAW STRING QR: ---');
     console.log(qr);
-    console.log('--- QR IMAGE FOR SCAN ---');
-    qrcode.generate(qr, { small: true });
   });
 
   client.on('ready', async () => {
@@ -101,6 +117,7 @@ export const initWhatsappBot = (io) => {
       case 'help':
         await msg.reply(helpKeyword());
         break;
+
       case 'suhu':
       case 'kelembapan':
       case 'gas':
@@ -110,6 +127,7 @@ export const initWhatsappBot = (io) => {
         }
         await msg.reply(await handleMonitoring(command, deviceId));
         break;
+
       case 'status':
         if (!deviceId) {
           await msg.reply(`⚠️ Perangkat belum ditautkan. Ketik \`!set [id_device]\``);
@@ -117,19 +135,15 @@ export const initWhatsappBot = (io) => {
         }
         await msg.reply(await getDeviceStatus(deviceId));
         break;
-      case 'grafik': {
-        let targetDeviceId = args[0] ? args[0] : deviceCache[whatsappChatId];
-        let periodInput = args[1] ? args[1] : undefined;
-        
-        if (args[0] && /^\d+[dwm]$/i.test(args[0])) {
-          targetDeviceId = deviceCache[whatsappChatId];
-          periodInput = args[0];
-        }
 
-        if (!targetDeviceId) {
-          await msg.reply(`⚠️ Perangkat belum ditautkan atau format salah.`);
+      case 'grafik': {
+        if (!deviceId) {
+          await msg.reply(`⚠️ Perangkat belum ditautkan. Ketik \`!set [id_device]\` terlebih dahulu.`);
           break;
         }
+
+        const targetDeviceId = deviceId; 
+        let periodInput = args[0] ? args[0] : undefined;
 
         const period = parsePeriod(periodInput);
         if (!period.isValid) {
@@ -149,6 +163,7 @@ export const initWhatsappBot = (io) => {
         try { await loadingGrafikMsg.delete(true); } catch (err) { console.error(err.message); }
         break;
       }
+
       case 'set-warning':
         if (!deviceId) {
           await msg.reply('⚠️ Perangkat belum ditautkan...');
@@ -156,16 +171,17 @@ export const initWhatsappBot = (io) => {
         }
         const choice = args[0] ? args[0].toLocaleLowerCase() : null;
         const valueInput = args[1];
-        const result = setThresholdDevice(deviceId, choice, valueInput);
+        const result = await setThresholdDevice(deviceId, choice, valueInput, mqttClient);
         
         if (result.success) {
           io.emit('update-device-config', result.payload);
-
           io.to(deviceId).emit('update-device-config', result.payload);
-          
           await msg.reply(result.message + ` pada device *${deviceId}* via Server.`);
+        } else {
+          await msg.reply(result.message);
         }
         break;
+
       default:
         await msg.reply('⚠️ Perintah tidak dikenali. Ketik !help untuk bantuan.');
         break;
