@@ -7,6 +7,7 @@ import loadDeviceCache, { deviceCache, setUserDeviceId } from './services/setDev
 import { parsePeriod } from './utils/helper.js';
 import { setThresholdDevice } from './services/setWarning.js';
 import Device from './models/Device.js'
+import mqttClient from './config/mqtt.js'
 
 const { Client, LocalAuth } = whatsappWeb;
 export const lastDeviceAlerts = new Map();
@@ -173,7 +174,7 @@ export const initWhatsappBot = (io) => {
         const choice = args[0] ? args[0].toLocaleLowerCase() : null;
         const valueInput = args[1];
         const result = await setThresholdDevice(deviceId, choice, valueInput, mqttClient);
-        
+
         if (result.success) {
           io.emit('update-device-config', result.payload);
           io.to(deviceId).emit('update-device-config', result.payload);

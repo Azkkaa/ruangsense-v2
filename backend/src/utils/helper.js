@@ -67,9 +67,9 @@ export const formatTime = (isoString) => {
 /**
  * Conditional status each status type
  *
- * @param {string} typeStatus 
+ * @param {"temp" | "humid" | "gas"} typeStatus 
  * @param {string} status 
- * @returns {("🔵" | "🟢" | "🟡" | "🔴" | "🟤" | "🟠")} 
+ * @returns {("🔵" | "🟢" | "🟡" | "🔴" | "🟤" | "🟠" | "undefined")} 
  */
 export const emojiStatusCondition = (typeStatus, status) => {
   switch (typeStatus) {
