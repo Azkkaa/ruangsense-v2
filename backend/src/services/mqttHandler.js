@@ -39,8 +39,6 @@ export const startListening = (io) => {
         else if (gas < 40) status.gas_status ="danger"
         else status.gas_status = "critical"
 
-        let alertPayload;
-        const lastNotificationSent = {};
         if (isTempDanger || isGasDanger) {
           const now = Date.now();
           const lastSent = lastNotificationSent[deviceId] || 0;
@@ -57,7 +55,7 @@ export const startListening = (io) => {
               temp_value: temp,
               temp_status: emojiStatusCondition('temp', status.temp_status), 
               gas_value: gas,
-              gas_status: status.gas_status
+              gas_status: emojiStatusCondition('gas', status.gas_status)
             };
 
             await sendSensorAlertWhatsApp(alertPayload);

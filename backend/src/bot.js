@@ -44,11 +44,11 @@ export const sendSensorAlertWhatsApp = async (alertData) => {
     time
   } = alertData;
 
-  const whatsappChatId = Object.keys(deviceCache).find(
+  const matchingChatIds = Object.keys(deviceCache).filter(
     (chatId) => deviceCache[chatId] === device_id
   );
 
-  if (!whatsappChatId) {
+  if (matchingChatIds.length === 0) {
     console.log(`[Alert] Tidak ditemukan chat ID untuk device ${device_id}`);
     return;
   }
@@ -59,8 +59,9 @@ export const sendSensorAlertWhatsApp = async (alertData) => {
   const canAlertTemp = isTempDanger && (now - lastAlert.tempTimestamp >= 5 * 60 * 1000);
   const canAlertGas = isGasDanger && (now - lastAlert.gasTimestamp >= 5 * 60 * 1000);
 
-  if (!canAlertTemp || canAlertGas) {
+  if (canAlertTemp || canAlertGas) {
     let alertMessage = `🚨 *NOTIFIKASI PERINGATAN*\n\nWaktu Kejadian: *${time}*\nID Perangkat: *${device_id}*\n\n`;
+    
     if (canAlertTemp) {
       alertMessage += `🌡️ Suhu Mencapai Threshold: *${temp_value}°C*\n`;
       lastAlert.tempTimestamp = now;
@@ -71,13 +72,19 @@ export const sendSensorAlertWhatsApp = async (alertData) => {
     }
     alertMessage += `\n_Mohon segera lakukan pengecekan fisik pada ruangan terkait!_`;
 
-    try {
-      await client.sendMessage(whatsappChatId, alertMessage);
-      console.log(`[Notif Sent] Sukses mengirim peringatan ke chatid: ${whatsappChatId}`);
-      lastDeviceAlerts.set(device_id, { temp_status, gas_status, timestamp: now });
-    } catch (err) {
-      console.error('❌ Gagal mengirim pesan alert via WhatsApp:', err.message);
+    for (const whatsappChatId of matchingChatIds) {
+      try {
+        await client.sendMessage(whatsappChatId, alertMessage);
+        console.log(`[Notif Sent] Sukses mengirim peringatan ke chatid: ${whatsappChatId}`);
+      } catch (err) {
+        console.error(`❌ Gagal mengirim pesan alert via WhatsApp ke ${whatsappChatId}:`, err.message);
+      }
     }
+
+    lastDeviceAlerts.set(device_id, { 
+      tempTimestamp: lastAlert.tempTimestamp, 
+      gasTimestamp: lastAlert.gasTimestamp 
+    });
   }
 };
 
