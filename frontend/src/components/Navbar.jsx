@@ -4,15 +4,6 @@ import logoRuangSense from '../assets/images/logo/logo_ruangsense-nobg.png';
 import { Link } from 'react-router-dom';
 
 const Navbar = () => {
-  const navigation = [
-    {
-      title: 'Features'
-    },
-    {
-      title: 'Analytics'
-    }
-  ]
-
   return (
     <nav className="fixed w-full top-0 z-50 bg-black/40 backdrop-blur-md border-b border-white/5 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -32,9 +23,7 @@ const Navbar = () => {
           animate={{ opacity: 1, x: 0 }}
           className="hidden md:flex items-center gap-8"
         >
-          {navigation.map((nav, index) => (
-            <a href="#features" key={index} className="text-sm font-medium text-gray-300 hover:text-white transition-colors">{nav.title}</a>
-          ))}
+          <a href="#features" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Features</a>
         </motion.div>
       </div>
     </nav>

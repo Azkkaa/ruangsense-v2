@@ -65,7 +65,7 @@ const DeviceSearch = () => {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="relative z-10 w-full max-w-xl px-6"
       >
-        <div className="text-center mb-10">
+        <div className="text-center mb-5">
           <motion.div 
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -74,7 +74,7 @@ const DeviceSearch = () => {
           >
             <img src={logoRuangSense} alt="Logo" className='w-20 h-auto'/>
           </motion.div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 text-transparent bg-clip-text bg-linear-to-r from-white to-gray-400">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2 text-transparent bg-clip-text bg-linear-to-r from-white to-gray-400">
             Hubungkan Device Anda
           </h1>
           <p className="text-gray-400 text-sm md:text-base">
