@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: ruangsense-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - ENVIRONMENT=production
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+      - MONGO_URI=mongodb://root:mypassword@mongodb:27017/ruangsense?authSource=admin
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    container_name: ruangsense-mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mypassword
+      MONGO_INITDB_DATABASE: ruangsense
+    volumes:
+      - ./data/db:/data/db
+    ports:
+      - "27017:27017"

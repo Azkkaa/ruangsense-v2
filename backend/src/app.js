@@ -4,7 +4,6 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import sensorLogRoutes from './routes/sensorLogRoutes.js'
 import deviceRoutes from './routes/deviceRoutes.js'
-import userDeviceRoutes from './routes/userDeviceRoutes.js'
 
 const app = express()
 

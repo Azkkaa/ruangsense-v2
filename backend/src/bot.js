@@ -4,31 +4,21 @@ import { startKeyword, helpKeyword } from './services/startService.js';
 import { getDeviceStatus, handleMonitoring } from './services/getDataDevice.js';
 import { handleCombineChart } from './services/createImageChart.js';
 import loadDeviceCache, { deviceCache, setUserDeviceId } from './services/setDeviceId.js';
-import { parsePeriod } from './utils/helper.js';
+import { emojiStatusCondition, parsePeriod } from './utils/helper.js';
 import { setThresholdDevice } from './services/setWarning.js';
-import Device from './models/Device.js'
 import mqttClient from './config/mqtt.js'
 
-const { Client, LocalAuth } = whatsappWeb;
+const { Client } = whatsappWeb;
+
 export const lastDeviceAlerts = new Map();
 
 export const client = new Client({
-  authStrategy: new LocalAuth({
-    clientId: "ruangsense-session"
-  }),
   puppeteer: {
-    headless: true,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
-      '--disable-gpu'
-    ]
+    ...(process.env.PUPPETEER_EXECUTABLE_PATH && {
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH
+    }),
+    // PUPPETEER_EXECUTABLE_PATH in prod using linux is PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+    args: ['--no-sandbox']
   }
 });
 
@@ -63,11 +53,11 @@ export const sendSensorAlertWhatsApp = async (alertData) => {
     let alertMessage = `🚨 *NOTIFIKASI PERINGATAN*\n\nWaktu Kejadian: *${time}*\nID Perangkat: *${device_id}*\n\n`;
     
     if (canAlertTemp) {
-      alertMessage += `🌡️ Suhu Mencapai Threshold: *${temp_value}°C*\n`;
+      alertMessage += `🌡️ Suhu Mencapai Threshold: *${temp_value}°C* ${emojiStatusCondition('temp' ,temp_status)}\n`;
       lastAlert.tempTimestamp = now;
     }
     if (canAlertGas) {
-      alertMessage += `💨 Sensor Gas Mencapai Threshold: *${gas_value} ppm*\n`;
+      alertMessage += `💨 Sensor Gas Mencapai Threshold: *${gas_value} ppm* ${emojiStatusCondition('gas' , gas_status)}\n`;
       lastAlert.gasTimestamp = now;
     }
     alertMessage += `\n_Mohon segera lakukan pengecekan fisik pada ruangan terkait!_`;

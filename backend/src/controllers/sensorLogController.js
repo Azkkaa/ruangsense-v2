@@ -56,7 +56,7 @@ export const createSensorLogData = async (deviceId, data, io) => {
 
     io.to(deviceId).emit('device-data', payload);
     console.log(`[IoT Data] Broadcasted data to room ${deviceId}:`, payload)
-    return true;
+    return { success: true, status, data: newData };
   } catch (err) {
     console.error("[SensorLogController] Error failed to process data:", err)
   }
