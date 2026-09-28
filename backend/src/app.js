@@ -7,9 +7,12 @@ import deviceRoutes from './routes/deviceRoutes.js'
 
 const app = express()
 
+const allowOrigin = process.env.ACCESS_CONTROL_ALLOW_ORIGIN
+console.log(`[Starter] Allow origin at ${allowOrigin}`)
+
 app.use(helmet())
 app.use(cors({
-	origin: process.env.FRONTEND_URL,
+	origin: allowOrigin,
 	methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
 }))
 app.use(morgan('dev'))

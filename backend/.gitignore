@@ -37,3 +37,4 @@ Thumbs.db
 # WA Linked Device
 .wwebjs_auth
 .wwebjs_cache
+wwebjs_auth

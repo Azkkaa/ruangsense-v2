@@ -1,5 +1,4 @@
 import whatsappWeb from 'whatsapp-web.js';
-import qrcode from 'qrcode-terminal';
 import { startKeyword, helpKeyword } from './services/startService.js';
 import { getDeviceStatus, handleMonitoring } from './services/getDataDevice.js';
 import { handleCombineChart } from './services/createImageChart.js';
@@ -8,11 +7,14 @@ import { emojiStatusCondition, parsePeriod } from './utils/helper.js';
 import { setThresholdDevice } from './services/setWarning.js';
 import mqttClient from './config/mqtt.js'
 
-const { Client } = whatsappWeb;
+const { Client, LocalAuth } = whatsappWeb;
 
 export const lastDeviceAlerts = new Map();
 
 export const client = new Client({
+  authStrategy: new LocalAuth({
+    dataPath: './wwebjs_auth'
+  }),
   puppeteer: {
     ...(process.env.PUPPETEER_EXECUTABLE_PATH && {
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH

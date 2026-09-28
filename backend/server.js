@@ -9,12 +9,13 @@ import { updateDeviceConfigSocket } from './src/controllers/deviceController.js'
 import { initWhatsappBot } from './src/bot.js'
 
 const PORT = process.env.PORT
+const allowOrigin = process.env.ACCESS_CONTROL_ALLOW_ORIGIN
 
 const httpServer = http.createServer(app)
 
 const io = new Server(httpServer, {
   cors: {
-    origin: '*',
+    origin: allowOrigin,
     methods: ["GET", "POST"]
   }
 })
@@ -61,7 +62,7 @@ const startServer = async () => {
     initWhatsappBot(io)
   
     httpServer.listen(PORT, () => {
-      console.log(`Server is listening on port ${PORT}...`)
+      console.log(`[Starter] Server is listening on port ${PORT}...`)
     })
   } catch (err) {
     console.error('Failed to start the server:', err)
