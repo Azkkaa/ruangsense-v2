@@ -2,6 +2,7 @@ import Device from '../models/Device.js';
 import SensorLog from '../models/SensorLog.js';
 import UserDevice from '../models/UserDevice.js';
 import { formatAndMaskResponse } from '../utils/helper.js'
+import { updateDeviceThresholdCache } from '../services/deviceCacheService.js';
 
 // ----- HTTP Controller Method ------
 export const createDevice = async (req, res) => {
@@ -15,6 +16,11 @@ export const createDevice = async (req, res) => {
       name,
       device_id
     })
+
+    updateDeviceThresholdCache(device_id, {
+      threshold_temp: newData.threshold_temp,
+      threshold_gas: newData.threshold_gas
+    });
 
     res.status(201).json({
       success: true,
@@ -113,6 +119,13 @@ export const updateDeviceConfigHTTP = async (req, res, mqttClient) => {
       return res.status(404).json({ success: false, message: "Device not found!!" });
     }
 
+    if (THRESHOLD_TEMP !== undefined || THRESHOLD_GAS !== undefined) {
+      updateDeviceThresholdCache(deviceId, {
+        ...(THRESHOLD_TEMP !== undefined && { threshold_temp: THRESHOLD_TEMP }),
+        ...(THRESHOLD_GAS !== undefined && { threshold_gas: THRESHOLD_GAS })
+      });
+    }
+
     const mqttPayload = {};
     if (THRESHOLD_TEMP !== undefined) mqttPayload.THRESHOLD_TEMP = THRESHOLD_TEMP;
     if (THRESHOLD_GAS !== undefined) mqttPayload.THRESHOLD_GAS = THRESHOLD_GAS;
@@ -170,6 +183,13 @@ export const updateDeviceConfigSocket = async (data, mqttClient) => {
     if (BUZZER_ALARM_ON !== undefined) updateData.buzzer_alarm_on = BUZZER_ALARM_ON;
 
     await Device.findOneAndUpdate({ device_id: deviceId }, { $set: updateData });
+
+    if (THRESHOLD_TEMP !== undefined || THRESHOLD_GAS !== undefined) {
+      updateDeviceThresholdCache(deviceId, {
+        ...(THRESHOLD_TEMP !== undefined && { threshold_temp: THRESHOLD_TEMP }),
+        ...(THRESHOLD_GAS !== undefined && { threshold_gas: THRESHOLD_GAS })
+      });
+    }
 
     const mqttPayload = {};
     if (THRESHOLD_TEMP !== undefined) mqttPayload.THRESHOLD_TEMP = THRESHOLD_TEMP;

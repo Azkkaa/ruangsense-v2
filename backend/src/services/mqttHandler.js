@@ -2,7 +2,7 @@ import { sendSensorAlertWhatsApp } from '../bot.js'
 import mqtt from '../config/mqtt.js'
 import { updateDeviceStatus } from '../controllers/deviceController.js'
 import { createSensorLogData } from '../controllers/sensorLogController.js'
-import Device from '../models/Device.js'
+import { getDeviceThresholdCached } from './deviceCacheService.js'
 
 export const startListening = (io) => {
   mqtt.on('message', async (topic, message) => {
@@ -21,9 +21,7 @@ export const startListening = (io) => {
         const temp = parsedData.temp;
         const gas = parsedData.gas;
 
-        const deviceThreshold = await Device.findOne({ device_id: deviceId }, { threshold_gas: 1, threshold_temp: 1, _id: 0})
-        const thresholdTemp = deviceThreshold?.threshold_temp ?? 34;
-        const thresholdGas = deviceThreshold?.threshold_gas ?? 10;
+        const { threshold_temp: thresholdTemp = 34, threshold_gas: thresholdGas = 10 } = (await getDeviceThresholdCached(deviceId)) || {};
 
         const isTempDanger = temp !== undefined && temp >= thresholdTemp;
         const isGasDanger = gas !== undefined && gas >= thresholdGas;

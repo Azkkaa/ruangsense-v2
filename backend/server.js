@@ -7,6 +7,7 @@ import { startListening } from './src/services/mqttHandler.js'
 import mqttClient from './src/config/mqtt.js'
 import { updateDeviceConfigSocket } from './src/controllers/deviceController.js'
 import { initWhatsappBot } from './src/bot.js'
+import { warmUpThresholdCache } from './src/services/deviceCacheService.js'
 
 const PORT = process.env.PORT
 const allowOrigin = process.env.ACCESS_CONTROL_ALLOW_ORIGIN
@@ -57,6 +58,7 @@ app.set('io', io)
 const startServer = async () => {
   try {
     await connectDB()
+    await warmUpThresholdCache()
     startListening(io)
 
     initWhatsappBot(io)

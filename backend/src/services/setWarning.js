@@ -1,4 +1,5 @@
 import Device from '../models/Device.js';
+import { updateDeviceThresholdCache } from './deviceCacheService.js';
 
 /**
  * Preparing and executing the threshold/alert change directly to DB and MQTT.
@@ -67,6 +68,13 @@ export const setThresholdDevice = async (deviceId, choice, valueInput, mqttClien
       { $set: updateData },
       { returnDocument: 'after' }
     );
+
+    if (updateData.threshold_temp !== undefined || updateData.threshold_gas !== undefined) {
+      updateDeviceThresholdCache(deviceId, {
+        ...(updateData.threshold_temp !== undefined && { threshold_temp: updateData.threshold_temp }),
+        ...(updateData.threshold_gas !== undefined && { threshold_gas: updateData.threshold_gas })
+      });
+    }
 
     if (mqttClient && typeof mqttClient.publish === 'function') {
       const topic = `ruangsense-v2/device/${deviceId}/command`;
