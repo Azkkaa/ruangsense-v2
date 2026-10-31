@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "type": "module",
   "scripts": {
-    "postinstall": "node scripts/patch-wwebjs.js",
+    "postinstall": "node scripts/patch-wwebjs.js || true",
     "start": "node server.js",
     "server": "nodemon server.js"
   },
