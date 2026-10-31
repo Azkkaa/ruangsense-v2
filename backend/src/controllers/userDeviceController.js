@@ -19,8 +19,14 @@ export const createWhatsappUserDevice = async (req, res) => {
       });
     }
 
+    // If this user had a different device previously, delete that old record
+    await UserDevice.deleteMany({
+      whatsapp_chat_id: whatsappChatId,
+      device_id: { $ne: deviceId }
+    });
+
     const updatedPairing = await UserDevice.findOneAndUpdate(
-      { whatsapp_chat_id: whatsappChatId },
+      { device_id: deviceId },
       {
         whatsapp_chat_id: whatsappChatId,
         whatsapp_number: whatsappNumber,

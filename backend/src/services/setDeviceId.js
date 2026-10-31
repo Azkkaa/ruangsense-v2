@@ -37,12 +37,26 @@ export const setUserDeviceId = async (client, whatsappChatId, deviceId) => {
       };
     }
 
+    // 1. Clear targetDeviceId from any previous owner in in-memory cache
+    for (const [chatId, devId] of Object.entries(deviceCache)) {
+      if (devId === targetDeviceId) {
+        delete deviceCache[chatId];
+      }
+    }
+
+    // 2. If this user had a different device previously, delete that old pairing
+    await UserDevice.deleteMany({
+      whatsapp_chat_id: targetChatId,
+      device_id: { $ne: targetDeviceId }
+    });
+
+    // 3. Find and update by device_id so ownership transfers to the new phone number
     await UserDevice.findOneAndUpdate(
-      { whatsapp_chat_id: targetChatId },
+      { device_id: targetDeviceId },
       {
+        device_id: targetDeviceId,
         whatsapp_chat_id: targetChatId,
-        whatsapp_number: targetNumber,
-        device_id: targetDeviceId
+        whatsapp_number: targetNumber
       },
       {
         new: true,
@@ -50,7 +64,9 @@ export const setUserDeviceId = async (client, whatsappChatId, deviceId) => {
         runValidators: true
       }
     );
-    deviceCache[whatsappChatId] = targetDeviceId;
+
+    // 4. Set the new owner in memory cache
+    deviceCache[targetChatId] = targetDeviceId;
 
     return {
       success: true,
